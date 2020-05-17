@@ -1,5 +1,7 @@
-package com.excel.exceloperations.entities
+package com.urskool.entities
 
+import com.excel.exceloperations.entities.Section
+import com.excel.exceloperations.entities.User
 import java.io.Serializable
 import java.util.*
 

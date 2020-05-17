@@ -3,7 +3,6 @@ package com.excel.exceloperations.entities
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 import java.sql.Date
-import javax.persistence.*
 
 //@Data
 //@Entity
@@ -27,7 +26,9 @@ class User(
         var placeOfBirth: String,
         var gender: String,
         var religionId: Long? = null,
-        var bloodGroupId: Long? = null
+        var bloodGroupId: Long? = null,
+        var primaryMobile: String,
+        var secondaryMobile: String? = null
 ) : Serializable {
 
 //    @ManyToMany(fetch = FetchType.EAGER)

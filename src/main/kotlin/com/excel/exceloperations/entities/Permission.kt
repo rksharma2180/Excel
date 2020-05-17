@@ -1,6 +1,6 @@
 package com.excel.exceloperations.entities
 
-import javax.persistence.*
+import com.excel.exceloperations.entities.Role
 
 //@Data
 //@Entity
