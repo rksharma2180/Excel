@@ -1,7 +1,5 @@
 package com.excel.exceloperations.entities
 
-import javax.persistence.*
-
 //@Data
 //@Entity
 //@Table(name = "roles")

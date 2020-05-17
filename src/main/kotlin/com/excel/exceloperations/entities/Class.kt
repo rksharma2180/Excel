@@ -1,5 +1,7 @@
 package com.excel.exceloperations.entities
 
+import com.excel.exceloperations.entities.AcademicYear
+import com.excel.exceloperations.entities.Section
 import java.io.Serializable
 
 class Class(

@@ -1,6 +1,7 @@
 package com.excel.exceloperations.controllers
 
 import com.excel.exceloperations.entities.Student
+import com.excel.exceloperations.entities.uploads.ExcelResponseEntity
 import com.excel.exceloperations.services.ExcelService
 import org.springframework.core.io.InputStreamResource
 import org.springframework.http.HttpHeaders
@@ -18,7 +19,7 @@ class ExcelCtrl(private val excelService: ExcelService ) {
     }
 
     @PostMapping("/import")
-    fun import(@RequestParam("file") file: MultipartFile): List<Student> {
+    fun import(@RequestParam("file") file: MultipartFile): List<ExcelResponseEntity> {
         println(file.originalFilename)
         return excelService.processExcelRows(file)
     }
