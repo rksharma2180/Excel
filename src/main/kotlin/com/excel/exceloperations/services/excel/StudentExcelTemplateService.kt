@@ -1,36 +1,33 @@
-package com.excel.exceloperations.services
+package com.excel.exceloperations.services.excel
 
 import com.excel.exceloperations.entities.*
 import com.excel.exceloperations.entities.uploads.ExcelResponseEntity
 import com.excel.exceloperations.entities.uploads.ExcelStudentEntityRow
-import com.excel.exceloperations.repositories.StudentRepo
-import org.apache.poi.ss.usermodel.*
-import org.apache.poi.ss.util.CellRangeAddressList
-import org.apache.poi.ss.util.CellReference
+import org.apache.poi.ss.usermodel.FillPatternType
+import org.apache.poi.ss.usermodel.IndexedColors
+import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.util.Date
 import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.LinkedHashMap
 
 @Service
-class ExcelService(private val studentRepo: StudentRepo) {
+class StudentExcelTemplateService: ExcelTemplate {
 
     val simpleDateFormat = SimpleDateFormat("dd/MM/yyyy")
 
-    fun processExcelRows(file: MultipartFile): List<ExcelResponseEntity> {
-        val workbook = XSSFWorkbook(file.inputStream)
-        val worksheet = workbook.getSheetAt(1)
-        val list: MutableList<ExcelResponseEntity> = mutableListOf()
+    override fun processExcelRecords(workbook: XSSFWorkbook): List<ExcelResponseEntity> {
 
+        val list: MutableList<ExcelResponseEntity> = mutableListOf()
+        val worksheet = workbook.getSheetAt(1)
 
         for (i in 1 until worksheet.physicalNumberOfRows) {
 
             val excelResponseEntity = ExcelStudentEntityRow(rowIndex = i)
             val row = worksheet.getRow(i)
+
             val studentName = readData(row, 0, excelResponseEntity)
             val aadharNumber = readData(row, 1, excelResponseEntity)
             val primaryMobile = readData(row, 2, excelResponseEntity)
@@ -114,71 +111,16 @@ class ExcelService(private val studentRepo: StudentRepo) {
             }
             list.add(excelResponseEntity)
         }
+        /*if(list.isEmpty()) {
+            val excelStudentEntityRow = ExcelStudentEntityRow()
+            excelStudentEntityRow.errors.add("No Records Found")
+            excelStudentEntityRow.status = "Error"
+            list.add(excelStudentEntityRow)
+        }*/
         return list
     }
 
-    fun readData(row: Row, cellIndex: Int, excelResponseEntity: ExcelResponseEntity): String {
-        var value = ""
-        try {
-            value = if (row.getCell(cellIndex).cellType == Cell.CELL_TYPE_NUMERIC) {
-                row.getCell(cellIndex).numericCellValue.toString()
-            } else {
-                row.getCell(cellIndex).stringCellValue
-            }
-        } catch(ex: Exception) {
-
-        }
-        return value
-    }
-
-    fun validateCellData(fieldName:String, value: String?, length: Int?, excelResponseEntity: ExcelResponseEntity) {
-
-        if(value.isNullOrEmpty()) {
-            excelResponseEntity.errors.add("value for $fieldName Not present")
-            return
-        }
-
-        if(null != length && value.trim().length != length) {
-            excelResponseEntity.errors.add("$fieldName should be $length digit number")
-        }
-
-    }
-
-
-    fun generateStudentExcelTemplate(): ByteArrayInputStream {
-
-        val outStream = ByteArrayOutputStream()
-        val workbook = generateWorkbookTemplate()
-        outStream.use {
-            workbook.write(outStream)
-        }
-
-        return ByteArrayInputStream(outStream.toByteArray())
-    }
-
-    fun getHeaderFields(): Map<String, Boolean> {
-        val fieldMap = LinkedHashMap<String, Boolean>()
-        fieldMap["Name"] = true
-        fieldMap["Aadhar Number"] = true
-        fieldMap["Mobile Number"] = true
-        fieldMap["Secondary mobile"] = false
-        fieldMap["Admission Number"] = true
-        fieldMap["Father Name"] = false
-        fieldMap["Mother Name"] = false
-        fieldMap["Date of Birth"] = false
-        fieldMap["Admission Date"] = false
-        fieldMap["Class of Admission"] = false
-        fieldMap["Gender"] = false
-        fieldMap["New"] = false
-        fieldMap["Flat No."] = false
-        fieldMap["Street Name"] = false
-        fieldMap["Landmark"] = false
-        fieldMap["City"] = false
-        fieldMap["State"] = false
-        return fieldMap
-    }
-
-    fun generateWorkbookTemplate(): XSSFWorkbook {
+    override fun generateWorkbookTemplate(): XSSFWorkbook {
 
         val classes =  arrayOf("Class 1", "Class 2", "Class 3", "Class 4", "Class 5","Class 6","Class 7",
                 "Class 8", "Class 9", "Class 10", "Class 11", "Class 12")
@@ -191,7 +133,6 @@ class ExcelService(private val studentRepo: StudentRepo) {
         createListSheet(workbook, genders, 1, "Gen")
 
         val sheet = workbook.createSheet("Sheet 1")
-        //sheet.protectSheet("")
 
         val sampleRowStyle = workbook.createCellStyle()
         sampleRowStyle.locked = true
@@ -207,106 +148,13 @@ class ExcelService(private val studentRepo: StudentRepo) {
         addSheetValidation(sheet, 1, 9, "Classes")
         addSheetValidation(sheet, 1, 10, "Gen")
 
-        fillHeaderRow(sheet, headerRow, workbook)
+        fillHeaderRow(sheet, headerRow, workbook, getStudentHeaderFields())
         fillDataInRow(sheet, sampleRowStyle, listOf(student))
 
         sheet.activeCell = "A3";
         workbook.setSheetHidden(0, true)
         workbook.setActiveSheet(1)
         return workbook
-    }
-
-    fun fillHeaderRow(sheet: Sheet, row: Row, workbook: XSSFWorkbook) {
-        val fieldMap = getHeaderFields()
-        val mandatoryCellFont = workbook.createFont()
-        val nonMandatoryCellFont = workbook.createFont()
-        val mandatoryCellStyle = workbook.createCellStyle()
-        val nonMandatoryCellStyle = workbook.createCellStyle()
-
-        mandatoryCellFont.bold = true
-        mandatoryCellFont.color = IndexedColors.RED.index
-        mandatoryCellStyle.setFont(mandatoryCellFont)
-        mandatoryCellStyle.locked = true
-
-        nonMandatoryCellFont.bold = true
-        nonMandatoryCellFont.color = IndexedColors.BLACK.index
-        nonMandatoryCellStyle.setFont(nonMandatoryCellFont)
-        nonMandatoryCellStyle.locked = true
-
-        var counter = 0;
-        fieldMap.forEach { (t, u) ->
-            val cell = row.createCell(counter)
-            //sheet.setColumnWidth(counter++, 3600)
-
-            if (u) {
-                cell.cellStyle = mandatoryCellStyle
-            } else {
-                cell.cellStyle = nonMandatoryCellStyle
-            }
-            cell.setCellValue(t)
-            sheet.autoSizeColumn(counter++)
-        }
-    }
-
-    fun fillDataInRow(sheet: Sheet, style: XSSFCellStyle, studentList: List<Student>) {
-        var counter = 1
-        val keys = getHeaderFields().keys
-
-        studentList.forEach { student ->
-            val row = sheet.createRow(counter++)
-            val studentMap = student.getStudentFieldMap()
-            var cellCounter = 0
-            keys.forEach {  key ->
-                if (studentMap.containsKey(key)) {
-                    val cell = row.createCell(cellCounter++)
-                    cell.cellStyle = style
-                    cell.setCellValue(studentMap[key])
-                }
-            }
-        }
-    }
-
-    fun createListSheet(workbook: XSSFWorkbook, items: Array<String>, column: Int, category: String) {
-
-        var sheet = workbook.getSheet("ListSheet")
-        if (null == sheet) {
-            sheet = workbook.createSheet("ListSheet");
-        }
-
-        val namedRange: Name
-        val colLetter: String = CellReference.convertNumToColString((column))
-        val reference: String
-
-        var r = 0
-        items.forEach { entry ->
-            var row = sheet.getRow(r)
-            if (null == row)
-                row = sheet.createRow(r)
-            row.createCell(column).setCellValue(entry);
-            r++
-        }
-        val to = items.size
-        namedRange = workbook.createName()
-        namedRange.nameName = category
-        reference = "ListSheet!\$$colLetter\$1:\$$colLetter$to"
-        println(reference)
-        namedRange.refersToFormula = reference;
-        sheet.isSelected = false;
-
-    }
-
-    fun addSheetValidation(sheet: Sheet, rowIndex: Int, colIndex:Int, category: String) {
-        val dataValidationHelper = sheet.dataValidationHelper
-        val constraint = dataValidationHelper.createFormulaListConstraint(category);
-        val addressList = CellRangeAddressList(rowIndex, 1000, colIndex, colIndex)
-        val validation = dataValidationHelper.createValidation(constraint, addressList)
-
-        validation.errorStyle = DataValidation.ErrorStyle.STOP;
-        validation.suppressDropDownArrow = true;
-        validation.emptyCellAllowed = false;
-        validation.showPromptBox = true;
-        validation.showErrorBox = true;
-        sheet.addValidationData(validation)
     }
 
     fun getSampleStudent(): Student {
@@ -331,5 +179,45 @@ class ExcelService(private val studentRepo: StudentRepo) {
                 joiningDate = simpleDateFormat.parse("02/06/1925"),
                 isNew = false
         )
+    }
+
+    fun getStudentHeaderFields(): Map<String, Boolean> {
+        val fieldMap = LinkedHashMap<String, Boolean>()
+        fieldMap["Name"] = true
+        fieldMap["Aadhar Number"] = true
+        fieldMap["Mobile Number"] = true
+        fieldMap["Secondary mobile"] = false
+        fieldMap["Admission Number"] = true
+        fieldMap["Father Name"] = false
+        fieldMap["Mother Name"] = false
+        fieldMap["Date of Birth"] = false
+        fieldMap["Admission Date"] = false
+        fieldMap["Class of Admission"] = false
+        fieldMap["Gender"] = false
+        fieldMap["New"] = false
+        fieldMap["Flat No."] = false
+        fieldMap["Street Name"] = false
+        fieldMap["Landmark"] = false
+        fieldMap["City"] = false
+        fieldMap["State"] = false
+        return fieldMap
+    }
+
+    fun fillDataInRow(sheet: Sheet, style: XSSFCellStyle, studentList: List<Student>) {
+        var counter = 1
+        val keys = getStudentHeaderFields().keys
+
+        studentList.forEach { student ->
+            val row = sheet.createRow(counter++)
+            val studentMap = student.getStudentFieldMap()
+            var cellCounter = 0
+            keys.forEach {  key ->
+                if (studentMap.containsKey(key)) {
+                    val cell = row.createCell(cellCounter++)
+                    cell.cellStyle = style
+                    cell.setCellValue(studentMap[key])
+                }
+            }
+        }
     }
 }
