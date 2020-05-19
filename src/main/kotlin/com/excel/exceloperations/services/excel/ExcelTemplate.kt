@@ -8,7 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 
 interface ExcelTemplate {
 
-    fun processExcelRecords(workbook: XSSFWorkbook): List<ExcelResponseEntity>
+    fun processExcelRecords(workbook: XSSFWorkbook): List<ExcelResponseEntity<Any>>
     fun generateWorkbookTemplate(): XSSFWorkbook
 
     fun addSheetValidation(sheet: Sheet, rowIndex: Int, colIndex:Int, category: String) {
@@ -82,7 +82,7 @@ interface ExcelTemplate {
         sheet.isSelected = false;
     }
 
-    fun readData(row: Row, cellIndex: Int, excelResponseEntity: ExcelResponseEntity): String {
+    fun readData(row: Row, cellIndex: Int, excelResponseEntity: ExcelResponseEntity<Any>): String {
         var value = ""
         try {
             value = if (row.getCell(cellIndex).cellType == Cell.CELL_TYPE_NUMERIC) {
@@ -91,21 +91,20 @@ interface ExcelTemplate {
                 row.getCell(cellIndex).stringCellValue
             }
         } catch(ex: Exception) {
-
+            ex.printStackTrace()
         }
         return value
     }
 
-    fun validateCellData(fieldName:String, value: String?, length: Int?, excelResponseEntity: ExcelResponseEntity) {
+    fun validateCellData(fieldName:String, value: String?, length: Int?, excelResponseEntity: ExcelResponseEntity<Any>) {
 
-        if(value.isNullOrEmpty()) {
+        if (value.isNullOrEmpty()) {
             excelResponseEntity.errors.add("value for $fieldName Not present")
             return
         }
 
-        if(null != length && value.trim().length != length) {
+        if (null != length && value.trim().length != length) {
             excelResponseEntity.errors.add("$fieldName should be $length digit number")
         }
-
     }
 }

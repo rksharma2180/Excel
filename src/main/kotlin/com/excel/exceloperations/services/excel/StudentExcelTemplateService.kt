@@ -2,7 +2,6 @@ package com.excel.exceloperations.services.excel
 
 import com.excel.exceloperations.entities.*
 import com.excel.exceloperations.entities.uploads.ExcelResponseEntity
-import com.excel.exceloperations.entities.uploads.ExcelStudentEntityRow
 import org.apache.poi.ss.usermodel.FillPatternType
 import org.apache.poi.ss.usermodel.IndexedColors
 import org.apache.poi.ss.usermodel.Sheet
@@ -18,14 +17,14 @@ class StudentExcelTemplateService: ExcelTemplate {
 
     val simpleDateFormat = SimpleDateFormat("dd/MM/yyyy")
 
-    override fun processExcelRecords(workbook: XSSFWorkbook): List<ExcelResponseEntity> {
+    override fun processExcelRecords(workbook: XSSFWorkbook): List<ExcelResponseEntity<Any>> {
 
-        val list: MutableList<ExcelResponseEntity> = mutableListOf()
+        val list: MutableList<ExcelResponseEntity<Any>> = mutableListOf()
         val worksheet = workbook.getSheetAt(1)
 
         for (i in 1 until worksheet.physicalNumberOfRows) {
 
-            val excelResponseEntity = ExcelStudentEntityRow(rowIndex = i)
+            val excelResponseEntity = ExcelResponseEntity<Any>(rowIndex = i)
             val row = worksheet.getRow(i)
 
             val studentName = readData(row, 0, excelResponseEntity)
@@ -99,13 +98,13 @@ class StudentExcelTemplateService: ExcelTemplate {
                     gender = gender,
                     identificationMark_1 = "",
                     identificationMark_2 = "",
-                    dob = simpleDateFormat.parse(dob) as Date?,
+                    dob = simpleDateFormat.parse(dob),
                     user = user,
                     joinClassId = 1L,
                     joiningDate = simpleDateFormat.parse(joiningDate) as Date?,
                     isNew = isNew.toBoolean()
             )
-            excelResponseEntity.student = student
+            excelResponseEntity.entity = student
             if (excelResponseEntity.errors.isNotEmpty()) {
                 excelResponseEntity.status = "Error"
             }
