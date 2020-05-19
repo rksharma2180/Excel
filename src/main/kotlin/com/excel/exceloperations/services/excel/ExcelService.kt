@@ -6,33 +6,23 @@ import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.util.*
 
 @Service
 class ExcelService(
-        private val studentExcelTemplate: StudentExcelTemplateService
+        private val excelTemplateFactory: ExcelTemplateFactory
 ) {
-    fun processStudentExcelRows(file: MultipartFile, templateType: String): List<ExcelResponseEntity> {
+    fun processExcel(file: MultipartFile, templateType: String): List<ExcelResponseEntity<Any>> {
         val workbook = XSSFWorkbook(file.inputStream)
-        var list: List<ExcelResponseEntity> = Collections.emptyList()
-        if (templateType == "student") {
-            list = studentExcelTemplate.processExcelRecords(workbook)
-        } else if (templateType == "staff") {
-            list = studentExcelTemplate.processExcelRecords(workbook)
-        }
-        return list
+        return excelTemplateFactory.getInstance(templateType).processExcelRecords(workbook)
     }
 
-    fun generateExcelTemplate(templateType: String): ByteArrayInputStream {
+    fun generateTemplate(templateType: String): ByteArrayInputStream {
         val outStream = ByteArrayOutputStream()
-        var workbook: XSSFWorkbook? = null
-        if (templateType == "student") {
-            workbook = studentExcelTemplate.generateWorkbookTemplate()
-        } else if (templateType == "staff") {
-            //workbook = studentExcelTemplate.generateWorkbookTemplate()
-        }
+        val workbook: XSSFWorkbook?
+        workbook = excelTemplateFactory.getInstance(templateType).generateWorkbookTemplate()
+
         outStream.use {
-            workbook?.write(outStream)
+            workbook.write(outStream)
         }
         return ByteArrayInputStream(outStream.toByteArray())
     }

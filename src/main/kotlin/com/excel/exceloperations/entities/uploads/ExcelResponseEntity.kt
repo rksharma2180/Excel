@@ -1,7 +1,8 @@
 package com.excel.exceloperations.entities.uploads
 
-open class ExcelResponseEntity(
+class ExcelResponseEntity<Any>(
         val errors: MutableList<String> = mutableListOf(),
         var status: String? = null,
-        open val rowIndex: Int? = null
-        )
+        var rowIndex: Int? = null,
+        var entity: Any? = null
+)

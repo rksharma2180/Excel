@@ -43,7 +43,7 @@ class Student(
 )
 
 {
-        public fun getStudentFieldMap(): Map<String, String> {
+        fun getStudentFieldMap(): Map<String, String> {
                 val studentMap = mutableMapOf<String, String>()
 
                 studentMap["Name"] = "$firstName $lastName"
