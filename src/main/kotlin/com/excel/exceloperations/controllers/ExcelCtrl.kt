@@ -1,6 +1,5 @@
 package com.excel.exceloperations.controllers
 
-import com.excel.exceloperations.entities.Student
 import com.excel.exceloperations.entities.uploads.ExcelResponseEntity
 import com.excel.exceloperations.services.excel.ExcelService
 import org.springframework.core.io.InputStreamResource
@@ -9,7 +8,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 @RestController
 @RequestMapping("excel")
@@ -17,7 +15,7 @@ class ExcelCtrl(private val excelService: ExcelService) {
 
     @PostMapping("/import/{templateType}")
     fun import(@PathVariable("templateType") templateType: String,
-               @RequestParam("file") file: MultipartFile) : ResponseEntity<List<ExcelResponseEntity<Any>>> {
+               @RequestParam("file") file: MultipartFile): ResponseEntity<List<ExcelResponseEntity<Any>>> {
         return try {
             ResponseEntity(excelService.processExcel(file, templateType), HttpStatus.OK)
         } catch(ex: Exception) {

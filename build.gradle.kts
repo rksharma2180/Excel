@@ -30,6 +30,8 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.apache.poi:poi-ooxml:3.9")
+	implementation("org.apache.pdfbox:pdfbox:2.0.1")
+    implementation("com.github.dhorions:boxable:1.4")
 	implementation("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
